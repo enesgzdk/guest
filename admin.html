@@ -3,81 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NOVA ADMIN</title>
+    <title>NOVA ADMIN PANEL</title>
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { nova: '#ff5500', dark: '#09090b', card: '#18181b', bordercol: '#27272a' },
+                    fontFamily: { bebas: ['"Bebas Neue"', 'sans-serif'], inter: ['"Inter"', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
     <style>
-        :root { --bg: #09090b; --card: #18181b; --accent: #ff5500; --text: #f4f4f5; --text-muted: #a1a1aa; --border: #27272a; --danger: #ef4444; }
-        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 40px 20px; }
-        .container { max-width: 900px; margin: auto; }
-        h1 { font-family: 'Bebas Neue', sans-serif; color: var(--accent); font-size: 3.5rem; margin: 0 0 40px 0; letter-spacing: 2px; text-align: center; }
-        h2 { font-size: 1.1rem; font-weight: 600; margin: 0 0 20px 0; color: var(--text); }
-        
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
-        @media(max-width: 768px) { .grid { grid-template-columns: 1fr; } }
-        
-        .card { background: var(--card); padding: 30px; border-radius: 20px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        input[type="text"], textarea { width: 100%; padding: 16px; margin-bottom: 15px; background: var(--bg); border: 1px solid var(--border); color: var(--text); box-sizing: border-box; border-radius: 12px; font-family: 'Inter', sans-serif; font-size: 0.95rem; outline: none; transition: 0.2s; }
-        input[type="text"]:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255, 85, 0, 0.15); }
-        textarea { height: 160px; resize: none; }
-        
-        button { width: 100%; padding: 16px; background: var(--accent); color: #000; border: none; font-weight: 600; font-size: 1rem; border-radius: 12px; cursor: pointer; transition: all 0.2s; font-family: 'Inter', sans-serif; }
-        button:hover { background: #e64c00; transform: translateY(-2px); }
-        button:active { transform: translateY(0); }
-        
-        .status { margin-top: 15px; font-size: 0.9rem; font-weight: 500; min-height: 20px; text-align: center; }
-        .success { color: #10b981; }
-        .error { color: var(--danger); }
-        
-        .list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .list-header h2 { margin: 0; }
-        .list-container { max-height: 400px; overflow-y: auto; padding-right: 8px; }
-        
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: var(--bg); }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #444; }
-        
-        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 16px; border-bottom: 1px solid var(--border); background: var(--bg); border-radius: 12px; margin-bottom: 8px; transition: 0.2s; }
-        .list-info { display: flex; align-items: center; gap: 12px; }
-        .guest-name { font-size: 1rem; font-weight: 500; }
-        .badge { background: rgba(255, 85, 0, 0.1); border: 1px solid var(--accent); color: var(--accent); padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.5px; }
-        
-        .delete-btn { width: auto; background: transparent; color: var(--text-muted); padding: 8px; border-radius: 8px; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
-        .delete-btn:hover { background: rgba(239, 68, 68, 0.1); color: var(--danger); transform: none; }
-        .delete-btn svg { width: 20px; height: 20px; }
-        .desc { font-size: 0.85rem; color: var(--text-muted); margin: -5px 0 15px 0; }
+        body { font-family: 'Inter', sans-serif; background-color: #09090b; color: #f4f4f5; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
     </style>
 </head>
-<body>
-    <div class="container">
-        <h1>NOVA ADMIN</h1>
+<body class="antialiased p-6 md:p-12">
 
-        <div class="grid">
-            <div class="card">
-                <h2>Tekli Ekle</h2>
-                <input type="text" id="singleName" placeholder="Örn: Ceyda Yılmaz" autocomplete="off">
-                <button onclick="addSingleGuest()">Misafir Ekle</button>
-                <div id="singleStatus" class="status"></div>
+    <div class="max-w-5xl mx-auto">
+        <h1 class="text-nova font-bebas text-6xl tracking-wide mb-10 text-center">NOVA ADMIN</h1>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            
+            <!-- Tekli Ekleme -->
+            <div class="bg-card border border-bordercol rounded-3xl p-8 shadow-2xl">
+                <h2 class="text-xl font-semibold mb-6">Misafir Ekle</h2>
+                <input type="text" id="singleName" placeholder="Örn: Ceyda Yılmaz" autocomplete="off"
+                    class="w-full bg-dark border border-bordercol rounded-xl px-4 py-3.5 mb-4 outline-none focus:border-nova transition-colors">
+                <button onclick="addSingleGuest()" 
+                    class="w-full bg-nova text-black font-semibold text-lg py-3.5 rounded-xl hover:bg-orange-600 transition-colors active:scale-95">
+                    Listeye Ekle
+                </button>
+                <div id="singleStatus" class="mt-4 text-center text-sm font-medium h-5"></div>
             </div>
 
-            <div class="card">
-                <h2>Toplu Ekle</h2>
-                <p class="desc">Kopyalanan listeyi yapıştırın (boşluklar otomatik temizlenir).</p>
-                <textarea id="bulkNames" placeholder="Ayşe Demir&#10;Mehmet Kaya&#10;..."></textarea>
-                <button onclick="addBulkGuests()">Listeyi Aktar</button>
-                <div id="bulkStatus" class="status"></div>
+            <!-- Toplu Ekleme -->
+            <div class="bg-card border border-bordercol rounded-3xl p-8 shadow-2xl">
+                <h2 class="text-xl font-semibold mb-2">Toplu Liste Aktar</h2>
+                <p class="text-zinc-500 text-sm mb-4">Her satıra bir isim. Boşluklar otomatik temizlenir.</p>
+                <textarea id="bulkNames" placeholder="Ayşe Demir&#10;Mehmet Kaya..."
+                    class="w-full h-32 bg-dark border border-bordercol rounded-xl px-4 py-3.5 mb-4 outline-none focus:border-nova transition-colors resize-none"></textarea>
+                <button onclick="addBulkGuests()" 
+                    class="w-full bg-zinc-100 text-black font-semibold text-lg py-3.5 rounded-xl hover:bg-white transition-colors active:scale-95">
+                    Tümünü Aktar
+                </button>
+                <div id="bulkStatus" class="mt-4 text-center text-sm font-medium h-5"></div>
             </div>
         </div>
 
-        <div class="card">
-            <div class="list-header">
-                <h2>Mevcut Liste</h2>
-                <span style="color: var(--text-muted); font-size: 0.95rem; font-weight: 500;"><span id="totalCount">0</span> Kişi</span>
+        <!-- Liste Yönetimi -->
+        <div class="bg-card border border-bordercol rounded-3xl p-8 shadow-2xl">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-semibold">Mevcut Liste</h2>
+                <span class="bg-dark border border-bordercol px-4 py-1.5 rounded-full text-zinc-400 font-medium text-sm">
+                    <span id="totalCount" class="text-white">0</span> Kayıt
+                </span>
             </div>
-            <div class="list-container" id="adminGuestList">
-                <div class="status" style="color: var(--text-muted)">Yükleniyor...</div>
+            
+            <div class="max-h-[500px] overflow-y-auto pr-2 flex flex-col gap-2" id="adminGuestList">
+                <div class="text-center text-zinc-500 py-10 animate-pulse">Liste yükleniyor...</div>
             </div>
         </div>
     </div>
@@ -85,44 +77,45 @@
     <script>
         const supabaseUrl = 'https://fmcfcnqqqjjpoomqised.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtY2ZjbnFxcWpqcG9vbXFpc2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwMzQ3MTIsImV4cCI6MjEwODYxMDcxMn0.1C7SeDvYI2K9iDO3LLRsaHbFXD2Cz9T7M6dSw26pIVs';
-        
-        // SYNTAX ERROR ÇÖZÜMÜ
         const db = window.supabase.createClient(supabaseUrl, supabaseKey);
 
         async function loadAdminGuests() {
             const listDiv = document.getElementById('adminGuestList');
             const { data, error } = await db.from('guests').select('*').order('id', { ascending: false });
             
-            if(error) return listDiv.innerHTML = `<span class="error">Hata: ${error.message}</span>`;
+            if(error) return listDiv.innerHTML = `<div class="text-red-500 p-4 text-center">Hata: ${error.message}</div>`;
             
             document.getElementById('totalCount').innerText = data.length;
             listDiv.innerHTML = '';
             
-            if(data.length === 0) return listDiv.innerHTML = '<div style="color:var(--text-muted); padding: 20px; text-align:center;">Liste boş.</div>';
+            if(data.length === 0) return listDiv.innerHTML = '<div class="text-zinc-500 text-center py-10">Henüz kimse eklenmemiş.</div>';
 
             data.forEach(guest => {
                 const item = document.createElement('div');
-                item.className = 'list-item';
+                item.className = 'flex justify-between items-center p-4 bg-dark border border-bordercol rounded-xl hover:border-zinc-700 transition-colors';
                 
-                const infoDiv = document.createElement('div');
-                infoDiv.className = 'list-info';
-                infoDiv.innerHTML = `<span class="guest-name">${guest.name}</span> ${guest.is_arrived ? '<span class="badge">GELDİ</span>' : ''}`;
-                
-                const delBtn = document.createElement('button');
-                delBtn.className = 'delete-btn';
-                delBtn.title = 'Sil';
-                delBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>`;
-                delBtn.onclick = () => deleteGuest(guest.id);
+                const badge = guest.is_arrived 
+                    ? `<span class="ml-3 px-2.5 py-0.5 rounded-md bg-nova/10 text-nova border border-nova/20 text-xs font-bold tracking-wide">GELDİ</span>` 
+                    : '';
 
-                item.appendChild(infoDiv);
-                item.appendChild(delBtn);
+                item.innerHTML = `
+                    <div class="flex items-center">
+                        <span class="text-zinc-200 font-medium">${guest.name}</span>
+                        ${badge}
+                    </div>
+                    <button onclick="deleteGuest(${guest.id})" class="p-2 text-zinc-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors" title="Sil">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                    </button>
+                `;
                 listDiv.appendChild(item);
             });
         }
 
         function showStatus(elementId, message, isError = false) {
             const el = document.getElementById(elementId);
-            el.className = `status ${isError ? 'error' : 'success'}`;
+            el.className = `mt-4 text-center text-sm font-medium h-5 ${isError ? 'text-red-500' : 'text-green-400'}`;
             el.innerText = message;
             setTimeout(() => el.innerText = '', 3000);
         }
@@ -150,6 +143,8 @@
             if(names.length === 0) return showStatus('bulkStatus', 'Lütfen geçerli isimler girin.', true);
             
             document.getElementById('bulkStatus').innerText = "Yükleniyor...";
+            
+            // Chunking: Eğer liste çok uzunsa Supabase API limitine takılmamak için
             const insertData = names.map(name => ({ name: name, is_arrived: false }));
             const { error } = await db.from('guests').insert(insertData);
             
@@ -161,7 +156,7 @@
         }
 
         async function deleteGuest(id) {
-            if(!confirm("Silmek istediğinize emin misiniz?")) return;
+            if(!confirm("Bu misafiri silmek istediğinize emin misiniz?")) return;
             const { error } = await db.from('guests').delete().eq('id', id);
             if(error) alert("Silinirken hata: " + error.message);
             else loadAdminGuests();
