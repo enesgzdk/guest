@@ -2,58 +2,55 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>NOVA GUEST</title>
+    
+    <!-- Supabase & Fonts -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { nova: '#ff5500', dark: '#09090b', card: '#18181b', bordercol: '#27272a' },
+                    fontFamily: { bebas: ['"Bebas Neue"', 'sans-serif'], inter: ['"Inter"', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
     <style>
-        :root { --bg: #09090b; --card: #18181b; --accent: #ff5500; --text: #f4f4f5; --text-muted: #a1a1aa; --border: #27272a; }
-        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding-bottom: 50px; }
-        .container { max-width: 600px; margin: auto; padding: 0 20px; }
-        .header { position: sticky; top: 0; background: rgba(9, 9, 11, 0.85); backdrop-filter: blur(12px); padding: 20px 0 15px; border-bottom: 1px solid var(--border); z-index: 10; margin-bottom: 20px; }
-        h1 { font-family: 'Bebas Neue', sans-serif; color: var(--accent); font-size: 2.8rem; margin: 0 0 5px 0; letter-spacing: 2px; }
-        .stats { font-weight: 500; font-size: 0.95rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .search-box { position: relative; }
-        .search-box input { width: 100%; padding: 16px; background: var(--card); border: 1px solid var(--border); color: var(--text); font-size: 1rem; border-radius: 12px; outline: none; transition: all 0.2s; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        .search-box input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255, 85, 0, 0.15); }
-        #guestContainer { display: flex; flex-direction: column; gap: 10px; }
-        .guest-item { display: flex; align-items: center; padding: 16px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; order: 0; transition: all 0.3s ease; }
-        .guest-item.arrived { opacity: 0.4; order: 1; background: var(--bg); border-color: transparent; }
-        .guest-item label { flex-grow: 1; margin-left: 16px; cursor: pointer; font-size: 1.1rem; font-weight: 500; }
-        
-        /* Custom UI Checkbox */
-        .checkbox-wrapper { position: relative; display: inline-block; width: 28px; height: 28px; }
-        .checkbox-wrapper input { opacity: 0; width: 0; height: 0; position: absolute; }
-        .checkmark { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--bg); border: 2px solid var(--border); border-radius: 8px; transition: .2s; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .checkbox-wrapper input:checked ~ .checkmark { background-color: var(--accent); border-color: var(--accent); }
-        .checkmark::after { content: ""; display: none; width: 6px; height: 12px; border: solid #000; border-width: 0 2px 2px 0; transform: rotate(45deg); margin-bottom: 2px; }
-        .checkbox-wrapper input:checked ~ .checkmark::after { display: block; }
-        .hidden { display: none !important; }
-        .loader { text-align: center; color: var(--text-muted); font-size: 0.9rem; padding: 20px; }
+        body { font-family: 'Inter', sans-serif; background-color: #09090b; color: #f4f4f5; -webkit-tap-highlight-color: transparent; }
+        .guest-item { order: 0; transition: all 0.3s ease; }
+        .guest-item.arrived { order: 1; opacity: 0.4; }
     </style>
 </head>
-<body>
-    <div class="header">
-        <div class="container">
-            <h1>NOVA GUEST</h1>
-            <div class="stats">
-                <span id="statsText">Gelen: 0 / Toplam: 0</span>
+<body class="antialiased pb-20">
+
+    <!-- Sticky Header -->
+    <div class="sticky top-0 z-50 bg-dark/80 backdrop-blur-xl border-b border-bordercol px-5 py-4 mb-6">
+        <div class="max-w-xl mx-auto">
+            <div class="flex justify-between items-end mb-4">
+                <h1 class="text-nova font-bebas text-5xl tracking-wide leading-none m-0">NOVA</h1>
+                <div id="statsText" class="text-zinc-400 font-medium text-sm pb-1">Gelen: 0 / 0</div>
             </div>
-            <div class="search-box">
-                <input type="text" id="searchInput" placeholder="İsim ara..." autocomplete="off" onkeyup="filterGuests()">
+            <div class="relative">
+                <input type="text" id="searchInput" autocomplete="off" onkeyup="filterGuests()" placeholder="Misafir ara..." 
+                    class="w-full bg-card border border-bordercol text-white placeholder-zinc-500 rounded-xl px-4 py-3.5 outline-none focus:border-nova focus:ring-1 focus:ring-nova transition-all shadow-inner text-base">
             </div>
         </div>
     </div>
     
-    <div class="container" id="guestContainer">
-        <div class="loader">Veriler yükleniyor...</div>
+    <!-- Guest List Container -->
+    <div class="max-w-xl mx-auto px-5 flex flex-col gap-3" id="guestContainer">
+        <div class="text-center text-zinc-500 py-10 animate-pulse">Listeler senkronize ediliyor...</div>
     </div>
 
     <script>
         const supabaseUrl = 'https://fmcfcnqqqjjpoomqised.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtY2ZjbnFxcWpqcG9vbXFpc2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwMzQ3MTIsImV4cCI6MjEwODYxMDcxMn0.1C7SeDvYI2K9iDO3LLRsaHbFXD2Cz9T7M6dSw26pIVs';
-        
-        // SYNTAX ERROR BURADA ÇÖZÜLDÜ (supabase değişken ismi db yapıldı)
         const db = window.supabase.createClient(supabaseUrl, supabaseKey);
 
         let allGuests = [];
@@ -62,7 +59,7 @@
             const container = document.getElementById('guestContainer');
             const { data, error } = await db.from('guests').select('*').order('name', { ascending: true });
             
-            if (error) { container.innerHTML = `<div class="loader">Hata: ${error.message}</div>`; return; }
+            if (error) { container.innerHTML = `<div class="text-red-500 text-center">Bağlantı Hatası: ${error.message}</div>`; return; }
             allGuests = data; renderGuests();
         }
 
@@ -75,27 +72,20 @@
                 div.className = `guest-item ${guest.is_arrived ? 'arrived' : ''}`;
                 div.setAttribute('data-name', guest.name.toLowerCase());
                 
-                const cbWrapper = document.createElement('label');
-                cbWrapper.className = 'checkbox-wrapper';
-                
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.checked = guest.is_arrived;
-                checkbox.id = 'guest_' + guest.id;
-                checkbox.onchange = (e) => toggleStatus(guest.id, e.target.checked, div);
-                
-                const checkmark = document.createElement('span');
-                checkmark.className = 'checkmark';
-                
-                cbWrapper.appendChild(checkbox);
-                cbWrapper.appendChild(checkmark);
-                
-                const textLabel = document.createElement('label');
-                textLabel.htmlFor = 'guest_' + guest.id;
-                textLabel.innerText = guest.name;
-                
-                div.appendChild(cbWrapper);
-                div.appendChild(textLabel);
+                // Şık Tailwind Checkbox Yapısı
+                div.innerHTML = `
+                    <label class="flex items-center cursor-pointer p-4 bg-card hover:bg-zinc-800/50 border border-bordercol rounded-2xl transition-colors">
+                        <div class="relative flex items-center justify-center">
+                            <input type="checkbox" class="peer hidden" id="guest_${guest.id}" ${guest.is_arrived ? 'checked' : ''} onchange="toggleStatus(${guest.id}, this.checked, this.closest('.guest-item'))">
+                            <div class="w-7 h-7 rounded-lg border-2 border-zinc-600 peer-checked:bg-nova peer-checked:border-nova transition-all flex items-center justify-center">
+                                <svg class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <span class="ml-4 text-lg font-medium text-zinc-100 select-none">${guest.name}</span>
+                    </label>
+                `;
                 container.appendChild(div);
             });
             updateStats();
@@ -112,7 +102,7 @@
         function filterGuests() {
             const query = document.getElementById('searchInput').value.toLowerCase();
             document.querySelectorAll('.guest-item').forEach(item => {
-                item.getAttribute('data-name').includes(query) ? item.classList.remove('hidden') : item.classList.add('hidden');
+                item.style.display = item.getAttribute('data-name').includes(query) ? 'flex' : 'none';
             });
         }
 
