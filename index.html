@@ -4,12 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>NOVA GUEST</title>
-    
-    <!-- Supabase & Fonts -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -29,7 +25,6 @@
 </head>
 <body class="antialiased pb-20">
 
-    <!-- Sticky Header -->
     <div class="sticky top-0 z-50 bg-dark/80 backdrop-blur-xl border-b border-bordercol px-5 py-4 mb-6">
         <div class="max-w-xl mx-auto">
             <div class="flex justify-between items-end mb-4">
@@ -43,7 +38,6 @@
         </div>
     </div>
     
-    <!-- Guest List Container -->
     <div class="max-w-xl mx-auto px-5 flex flex-col gap-3" id="guestContainer">
         <div class="text-center text-zinc-500 py-10 animate-pulse">Listeler senkronize ediliyor...</div>
     </div>
@@ -72,7 +66,10 @@
                 div.className = `guest-item ${guest.is_arrived ? 'arrived' : ''}`;
                 div.setAttribute('data-name', guest.name.toLowerCase());
                 
-                // Şık Tailwind Checkbox Yapısı
+                const beerBadge = guest.has_beer 
+                    ? `<span class="ml-auto mr-4 flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 border border-amber-500/30 text-amber-500 rounded-lg font-bold text-sm tracking-wide shadow-[0_0_10px_rgba(245,158,11,0.1)]">🍺 BİRA</span>` 
+                    : '<span class="ml-auto"></span>';
+
                 div.innerHTML = `
                     <label class="flex items-center cursor-pointer p-4 bg-card hover:bg-zinc-800/50 border border-bordercol rounded-2xl transition-colors">
                         <div class="relative flex items-center justify-center">
@@ -84,6 +81,7 @@
                             </div>
                         </div>
                         <span class="ml-4 text-lg font-medium text-zinc-100 select-none">${guest.name}</span>
+                        ${beerBadge}
                     </label>
                 `;
                 container.appendChild(div);
