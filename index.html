@@ -53,21 +53,12 @@
             const container = document.getElementById('guestContainer');
             const { data, error } = await db.from('guests').select('*').order('name', { ascending: true });
             
-            if (error) { container.innerHTML = `<div class="text-red-500 text-center">Bağlantı Hatası: ${error.message}</div>`; return; }
-            allGuests = data; renderGuests();
-        }
-
-        function renderGuests() {
-            const container = document.getElementById('guestContainer');
-            container.innerHTML = ''; 
-            
-            allGuests.forEach(guest => {
-                const div = document.createElement('div');
-                div.className = `guest-item ${guest.is_arrived ? 'arrived' : ''}`;
+            if (error) { container.innerHTML = `<div class="text-red-500 text-center">Bağlantı Hatası: ${error.message}</div>`; return; } allGuests = data; renderGuests(); }  function renderGuests() { const container = document.getElementById('guestContainer'); container.innerHTML = '';  allGuests.forEach(guest => { const div = document.createElement('div'); div.className = `guest-item ${guest.is_arrived ? 'arrived' : ''}`;
                 div.setAttribute('data-name', guest.name.toLowerCase());
                 
-                const beerBadge = guest.has_beer 
-                    ? `<span class="ml-auto mr-4 flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 border border-amber-500/30 text-amber-500 rounded-lg font-bold text-sm tracking-wide shadow-[0_0_10px_rgba(245,158,11,0.1)]">🍺 BİRA</span>` 
+                const beerCount = guest.beer_count || 0;
+                const beerBadge = beerCount > 0 
+                    ? `<span class="ml-auto mr-4 flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 border border-amber-500/30 text-amber-500 rounded-lg font-bold text-sm tracking-wide shadow-[0_0_10px_rgba(245,158,11,0.1)]">🍺 ${beerCount} BİRA</span>` 
                     : '<span class="ml-auto"></span>';
 
                 div.innerHTML = `
@@ -80,8 +71,7 @@
                                 </svg>
                             </div>
                         </div>
-                        <span class="ml-4 text-lg font-medium text-zinc-100 select-none">${guest.name}</span>
-                        ${beerBadge}
+                        <span class="ml-4 text-lg font-medium text-zinc-100 select-none">${guest.name}</span>${beerBadge}
                     </label>
                 `;
                 container.appendChild(div);
@@ -105,7 +95,7 @@
         }
 
         function updateStats() {
-            document.getElementById('statsText').innerText = `Gelen: ${allGuests.filter(g => g.is_arrived).length} / Toplam: ${allGuests.length}`;
+            document.getElementById('statsText').innerText = `Gelen: ${allGuests.filter(g => g.is_arrived).length} / Toplam:${allGuests.length}`;
         }
 
         loadGuests();
