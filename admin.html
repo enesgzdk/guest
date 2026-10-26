@@ -3,55 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guest Ekle</title>
-    <!-- Supabase JS CDN -->
+    <title>Nova Guest Admin</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; padding: 2rem; background: #f4f4f5; max-width: 600px; margin: auto; }
-        textarea { width: 100%; height: 250px; padding: 15px; margin-bottom: 15px; font-family: inherit; border: 2px solid #000; box-sizing: border-box; }
-        button { padding: 12px 24px; background: #000; color: #fff; border: none; font-weight: bold; cursor: pointer; font-size: 16px; }
-        #status { margin-top: 15px; font-weight: bold; }
+        body { font-family: 'Inter', sans-serif; padding: 20px; background: #121212; color: #eee; max-width: 700px; margin: auto; }
+        h1, h2 { color: #ff5500; text-transform: uppercase; letter-spacing: 1px; }
+        .card { background: #1e1e1e; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #333; }
+        input[type="text"], textarea { width: 100%; padding: 12px; margin-bottom: 10px; background: #222; border: 1px solid #444; color: #fff; box-sizing: border-box; border-radius: 4px; }
+        input[type="text"]:focus, textarea:focus { outline: none; border-color: #ff5500; }
+        textarea { height: 120px; resize: vertical; }
+        button { padding: 12px 20px; background: #ff5500; color: #000; border: none; font-weight: bold; cursor: pointer; font-size: 15px; border-radius: 4px; transition: 0.2s; }
+        button:hover { background: #e04a00; }
+        button.delete-btn { background: #dc3545; color: #fff; padding: 6px 12px; font-size: 13px; }
+        button.delete-btn:hover { background: #c82333; }
+        .status { margin-top: 10px; font-size: 14px; font-weight: bold; color: #4caf50; }
+        .error { color: #ff5500; }
+        
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #333; }
+        .list-item:last-child { border-bottom: none; }
+        .list-item span { font-size: 15px; }
+        .arrived-badge { background: #ff5500; color: #000; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; margin-left: 10px; }
     </style>
 </head>
 <body>
-    <h1>Toplu Guest Ekle</h1>
-    <p>Her satıra bir isim gelecek şekilde listeyi yapıştırın:</p>
-    <textarea id="guestList" placeholder="Ahmet Yılmaz&#10;Ayşe Demir&#10;..."></textarea>
-    <button onclick="addGuests()">Veritabanına Ekle</button>
-    <div id="status"></div>
+    <h1>Nova Guest Admin</h1>
+
+    <div class="card">
+        <h2>Tekli Misafir Ekle</h2>
+        <input type="text" id="singleName" placeholder="Örn: Ahmet Yılmaz">
+        <button onclick="addSingleGuest()">Misafir Ekle</button>
+        <div id="singleStatus" class="status"></div>
+    </div>
+
+    <div class="card">
+        <h2>Toplu Liste Aktar</h2>
+        <p style="font-size: 13px; color: #aaa; margin-top: 0;">Her satıra bir isim gelecek şekilde listeyi yapıştırın (boşluklar otomatik temizlenir).</p>
+        <textarea id="bulkNames" placeholder="Ayşe Demir&#10;Mehmet Kaya&#10;..."></textarea>
+        <button onclick="addBulkGuests()">Toplu Ekle</button>
+        <div id="bulkStatus" class="status"></div>
+    </div>
+
+    <div class="card">
+        <h2>Mevcut Liste (<span id="totalCount">0</span> Kişi)</h2>
+        <div id="adminGuestList">Yükleniyor...</div>
+    </div>
 
     <script>
-        // KENDİ BİLGİLERİNİ BURAYA GİR
         const supabaseUrl = 'https://fmcfcnqqqjjpoomqised.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtY2ZjbnFxcWpqcG9vbXFpc2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwMzQ3MTIsImV4cCI6MjEwODYxMDcxMn0.1C7SeDvYI2K9iDO3LLRsaHbFXD2Cz9T7M6dSw26pIVs';
         const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-        async function addGuests() {
-            const text = document.getElementById('guestList').value;
-            const status = document.getElementById('status');
+        async function loadAdminGuests() {
+            const listDiv = document.getElementById('adminGuestList');
+            const { data, error } = await supabase.from('guests').select('*').order('id', { ascending: false });
             
-            // Satırları ayır, sağ/sol boşlukları temizle, boş olanları filtrele
+            if(error) return listDiv.innerHTML = `<span class="error">Hata: ${error.message}</span>`;
+            
+            document.getElementById('totalCount').innerText = data.length;
+            listDiv.innerHTML = '';
+            
+            if(data.length === 0) return listDiv.innerHTML = '<span style="color:#aaa;">Henüz kimse eklenmemiş.</span>';
+
+            data.forEach(guest => {
+                const item = document.createElement('div');
+                item.className = 'list-item';
+                
+                const nameSpan = document.createElement('span');
+                nameSpan.innerHTML = `${guest.name} ${guest.is_arrived ? '<span class="arrived-badge">GELDİ</span>' : ''}`;
+                
+                const delBtn = document.createElement('button');
+                delBtn.className = 'delete-btn';
+                delBtn.innerText = 'Sil';
+                delBtn.onclick = () => deleteGuest(guest.id);
+
+                item.appendChild(nameSpan);
+                item.appendChild(delBtn);
+                listDiv.appendChild(item);
+            });
+        }
+
+        async function addSingleGuest() {
+            const nameInput = document.getElementById('singleName');
+            const status = document.getElementById('singleStatus');
+            const name = nameInput.value.trim();
+
+            if(!name) return status.innerHTML = '<span class="error">Lütfen bir isim girin.</span>';
+            
+            status.innerHTML = "Ekleniyor...";
+            const { error } = await supabase.from('guests').insert([{ name: name, is_arrived: false }]);
+            
+            if(error) return status.innerHTML = `<span class="error">Hata: ${error.message}</span>`;
+            
+            status.innerText = "Başarıyla eklendi!";
+            nameInput.value = '';
+            loadAdminGuests();
+            setTimeout(() => status.innerText = '', 3000);
+        }
+
+        async function addBulkGuests() {
+            const text = document.getElementById('bulkNames').value;
+            const status = document.getElementById('bulkStatus');
             const names = text.split('\n').map(n => n.trim()).filter(n => n.length > 0);
 
-            if(names.length === 0) {
-                status.innerText = "Lütfen en az bir isim girin.";
-                return;
-            }
+            if(names.length === 0) return status.innerHTML = '<span class="error">Lütfen en az bir isim girin.</span>';
             
             status.innerText = "Yükleniyor...";
-
-            // Supabase'in istediği formata (array of objects) çevir
             const insertData = names.map(name => ({ name: name, is_arrived: false }));
-
             const { error } = await supabase.from('guests').insert(insertData);
             
-            if(error) {
-                status.innerText = "Hata: " + error.message;
-            } else {
-                status.innerText = `${names.length} kişi başarıyla eklendi!`;
-                document.getElementById('guestList').value = ''; // Kutuyu temizle
-            }
+            if(error) return status.innerHTML = `<span class="error">Hata: ${error.message}</span>`;
+            
+            status.innerText = `${names.length} kişi eklendi!`;
+            document.getElementById('bulkNames').value = '';
+            loadAdminGuests();
+            setTimeout(() => status.innerText = '', 3000);
         }
+
+        async function deleteGuest(id) {
+            if(!confirm("Bu misafiri silmek istediğinize emin misiniz?")) return;
+            const { error } = await supabase.from('guests').delete().eq('id', id);
+            if(error) alert("Silinirken hata oluştu: " + error.message);
+            else loadAdminGuests();
+        }
+
+        // Sayfa açıldığında listeyi yükle
+        loadAdminGuests();
     </script>
 </body>
 </html>
