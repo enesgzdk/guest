@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kapı Kontrol</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #fafafa; padding: 20px; max-width: 600px; margin: auto; }
+        .header { position: sticky; top: 0; background: #fafafa; padding-bottom: 10px; border-bottom: 1px solid #ddd; z-index: 10; }
+        input[type="text"] { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #000; box-sizing: border-box; font-size: 16px; border-radius: 4px; }
+        #stats { font-weight: bold; margin-bottom: 10px; font-size: 1.1em; color: #333; }
+        
+        /* Liste Container'ı Flex olmalı ki order özelliği çalışsın */
+        #guestContainer { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; }
+        
+        .guest-item { 
+            display: flex; align-items: center; padding: 15px; 
+            background: #fff; border: 1px solid #eee; border-radius: 6px;
+            order: 0; /* Gelenler 1 olacak ve alta düşecek */
+            transition: opacity 0.2s, background 0.2s;
+        }
+        
+        /* Tiklenince alta düşüp saydamlaşan kısım */
+        .guest-item.arrived { opacity: 0.4; order: 1; background: #f4f4f5; }
+        
+        .guest-item label { flex-grow: 1; margin-left: 12px; cursor: pointer; font-size: 16px; font-weight: 500; }
+        .guest-item input[type="checkbox"] { transform: scale(1.5); cursor: pointer; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Davetli Listesi</h1>
+        <div id="stats">Gelen: 0 / Toplam: 0</div>
+        <input type="text" id="searchInput" placeholder="İsim ara..." onkeyup="filterGuests()">
+    </div>
+    
+    <div id="guestContainer">Veriler çekiliyor...</div>
+
+    <script>
+        // KENDİ BİLGİLERİNİ BURAYA GİR
+        const supabaseUrl = 'https://fmcfcnqqqjjpoomqised.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtY2ZjbnFxcWpqcG9vbXFpc2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwMzQ3MTIsImV4cCI6MjEwODYxMDcxMn0.1C7SeDvYI2K9iDO3LLRsaHbFXD2Cz9T7M6dSw26pIVs';
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+        let allGuests = [];
+
+        // Başlangıçta tüm datayı çek (İsme göre alfabetik)
+        async function loadGuests() {
+            const container = document.getElementById('guestContainer');
+            const { data, error } = await supabase
+                .from('guests')
+                .select('*')
+                .order('name', { ascending: true });
+            
+            if (error) {
+                container.innerHTML = "Hata oluştu: " + error.message;
+                return;
+            }
+            
+            allGuests = data;
+            renderGuests();
+        }
+
+        // Arayüzü oluştur
+        function renderGuests() {
+            const container = document.getElementById('guestContainer');
+            container.innerHTML = ''; // Loading yazısını temizle
+            
+            allGuests.forEach(guest => {
+                const div = document.createElement('div');
+                // Eğer veritabanında true ise baştan arrived class'ı ver
+                div.className = `guest-item ${guest.is_arrived ? 'arrived' : ''}`;
+                div.setAttribute('data-name', guest.name.toLowerCase());
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.checked = guest.is_arrived;
+                checkbox.id = 'guest_' + guest.id;
+                
+                // Tıklandığında tetiklenecek fonksiyon
+                checkbox.onchange = (e) => toggleStatus(guest.id, e.target.checked, div);
+                
+                const label = document.createElement('label');
+                label.htmlFor = 'guest_' + guest.id;
+                label.innerText = guest.name;
+                
+                div.appendChild(checkbox);
+                div.appendChild(label);
+                container.appendChild(div);
+            });
+            
+            updateStats();
+        }
+
+        // Checkbox durumu değiştiğinde çalışır
+        async function toggleStatus(id, isArrived, element) {
+            // 1. Optimistic UI: Kullanıcıyı bekletmeden arayüzü anında güncelle
+            if(isArrived) {
+                element.classList.add('arrived');
+            } else {
+                element.classList.remove('arrived');
+            }
+            
+            // 2. Lokal arrayi ve sayaçları güncelle
+            const guestIndex = allGuests.findIndex(g => g.id === id);
+            if(guestIndex > -1) {
+                allGuests[guestIndex].is_arrived = isArrived;
+            }
+            updateStats();
+
+            // 3. Arka planda veritabanını güncelle
+            await supabase.from('guests').update({ is_arrived: isArrived }).eq('id', id);
+        }
+
+        // Arama çubuğu mantığı
+        function filterGuests() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const items = document.querySelectorAll('.guest-item');
+            
+            items.forEach(item => {
+                if (item.getAttribute('data-name').includes(query)) {
+                    item.classList.remove('hidden');
+                } else {
+                    item.classList.add('hidden');
+                }
+            });
+        }
+
+        // Üstteki sayaç güncelleyici
+        function updateStats() {
+            const total = allGuests.length;
+            const arrived = allGuests.filter(g => g.is_arrived).length;
+            document.getElementById('stats').innerText = `Gelen: ${arrived} / Toplam: ${total}`;
+        }
+
+        // Sayfa açıldığında verileri yükle
+        loadGuests();
+    </script>
+</body>
+</html>
