@@ -3,61 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nova Guest</title>
+    <title>NOVA GUEST</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background: #121212; color: #eee; padding: 20px; max-width: 600px; margin: auto; }
-        .header { position: sticky; top: 0; background: #121212; padding-bottom: 15px; border-bottom: 2px solid #ff5500; z-index: 10; }
-        h1 { color: #ff5500; margin-bottom: 5px; text-transform: uppercase; font-weight: 900; letter-spacing: 1px; }
-        input[type="text"] { width: 100%; padding: 12px; margin: 10px 0; background: #222; border: 1px solid #444; color: #fff; box-sizing: border-box; font-size: 16px; border-radius: 6px; }
-        input[type="text"]:focus { outline: none; border-color: #ff5500; }
-        #stats { font-weight: bold; margin-bottom: 10px; font-size: 1.1em; color: #ccc; }
+        :root { --bg: #09090b; --card: #18181b; --accent: #ff5500; --text: #f4f4f5; --text-muted: #a1a1aa; --border: #27272a; }
+        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding-bottom: 50px; }
+        .container { max-width: 600px; margin: auto; padding: 0 20px; }
+        .header { position: sticky; top: 0; background: rgba(9, 9, 11, 0.85); backdrop-filter: blur(12px); padding: 20px 0 15px; border-bottom: 1px solid var(--border); z-index: 10; margin-bottom: 20px; }
+        h1 { font-family: 'Bebas Neue', sans-serif; color: var(--accent); font-size: 2.8rem; margin: 0 0 5px 0; letter-spacing: 2px; }
+        .stats { font-weight: 500; font-size: 0.95rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .search-box { position: relative; }
+        .search-box input { width: 100%; padding: 16px; background: var(--card); border: 1px solid var(--border); color: var(--text); font-size: 1rem; border-radius: 12px; outline: none; transition: all 0.2s; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        .search-box input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255, 85, 0, 0.15); }
+        #guestContainer { display: flex; flex-direction: column; gap: 10px; }
+        .guest-item { display: flex; align-items: center; padding: 16px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; order: 0; transition: all 0.3s ease; }
+        .guest-item.arrived { opacity: 0.4; order: 1; background: var(--bg); border-color: transparent; }
+        .guest-item label { flex-grow: 1; margin-left: 16px; cursor: pointer; font-size: 1.1rem; font-weight: 500; }
         
-        #guestContainer { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; }
-        
-        .guest-item { 
-            display: flex; align-items: center; padding: 15px; 
-            background: #1e1e1e; border: 1px solid #333; border-radius: 6px;
-            order: 0; transition: opacity 0.2s, background 0.2s, border-color 0.2s;
-        }
-        
-        .guest-item.arrived { opacity: 0.4; order: 1; background: #111; border-color: #222; }
-        .guest-item label { flex-grow: 1; margin-left: 12px; cursor: pointer; font-size: 16px; font-weight: 500; }
-        
-        /* Turuncu Checkbox Customization */
-        .guest-item input[type="checkbox"] { 
-            appearance: none; width: 24px; height: 24px; background: #333; 
-            border-radius: 4px; cursor: pointer; position: relative; border: 1px solid #555;
-        }
-        .guest-item input[type="checkbox"]:checked { background: #ff5500; border-color: #ff5500; }
-        .guest-item input[type="checkbox"]:checked::after {
-            content: '✔'; position: absolute; color: white; font-size: 16px; 
-            top: 50%; left: 50%; transform: translate(-50%, -50%);
-        }
+        /* Custom UI Checkbox */
+        .checkbox-wrapper { position: relative; display: inline-block; width: 28px; height: 28px; }
+        .checkbox-wrapper input { opacity: 0; width: 0; height: 0; position: absolute; }
+        .checkmark { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--bg); border: 2px solid var(--border); border-radius: 8px; transition: .2s; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .checkbox-wrapper input:checked ~ .checkmark { background-color: var(--accent); border-color: var(--accent); }
+        .checkmark::after { content: ""; display: none; width: 6px; height: 12px; border: solid #000; border-width: 0 2px 2px 0; transform: rotate(45deg); margin-bottom: 2px; }
+        .checkbox-wrapper input:checked ~ .checkmark::after { display: block; }
         .hidden { display: none !important; }
+        .loader { text-align: center; color: var(--text-muted); font-size: 0.9rem; padding: 20px; }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>Nova Guest</h1>
-        <div id="stats">Gelen: 0 / Toplam: 0</div>
-        <input type="text" id="searchInput" placeholder="İsim ara..." onkeyup="filterGuests()">
+        <div class="container">
+            <h1>NOVA GUEST</h1>
+            <div class="stats">
+                <span id="statsText">Gelen: 0 / Toplam: 0</span>
+            </div>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="İsim ara..." autocomplete="off" onkeyup="filterGuests()">
+            </div>
+        </div>
     </div>
     
-    <div id="guestContainer">Veriler çekiliyor...</div>
+    <div class="container" id="guestContainer">
+        <div class="loader">Veriler yükleniyor...</div>
+    </div>
 
     <script>
         const supabaseUrl = 'https://fmcfcnqqqjjpoomqised.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtY2ZjbnFxcWpqcG9vbXFpc2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwMzQ3MTIsImV4cCI6MjEwODYxMDcxMn0.1C7SeDvYI2K9iDO3LLRsaHbFXD2Cz9T7M6dSw26pIVs';
-        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+        
+        // SYNTAX ERROR BURADA ÇÖZÜLDÜ (supabase değişken ismi db yapıldı)
+        const db = window.supabase.createClient(supabaseUrl, supabaseKey);
 
         let allGuests = [];
 
         async function loadGuests() {
             const container = document.getElementById('guestContainer');
-            const { data, error } = await supabase.from('guests').select('*').order('name', { ascending: true });
+            const { data, error } = await db.from('guests').select('*').order('name', { ascending: true });
             
-            if (error) return container.innerHTML = "Hata oluştu: " + error.message;
+            if (error) { container.innerHTML = `<div class="loader">Hata: ${error.message}</div>`; return; }
             allGuests = data; renderGuests();
         }
 
@@ -70,18 +75,27 @@
                 div.className = `guest-item ${guest.is_arrived ? 'arrived' : ''}`;
                 div.setAttribute('data-name', guest.name.toLowerCase());
                 
+                const cbWrapper = document.createElement('label');
+                cbWrapper.className = 'checkbox-wrapper';
+                
                 const checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
                 checkbox.checked = guest.is_arrived;
                 checkbox.id = 'guest_' + guest.id;
                 checkbox.onchange = (e) => toggleStatus(guest.id, e.target.checked, div);
                 
-                const label = document.createElement('label');
-                label.htmlFor = 'guest_' + guest.id;
-                label.innerText = guest.name;
+                const checkmark = document.createElement('span');
+                checkmark.className = 'checkmark';
                 
-                div.appendChild(checkbox);
-                div.appendChild(label);
+                cbWrapper.appendChild(checkbox);
+                cbWrapper.appendChild(checkmark);
+                
+                const textLabel = document.createElement('label');
+                textLabel.htmlFor = 'guest_' + guest.id;
+                textLabel.innerText = guest.name;
+                
+                div.appendChild(cbWrapper);
+                div.appendChild(textLabel);
                 container.appendChild(div);
             });
             updateStats();
@@ -92,7 +106,7 @@
             const guestIndex = allGuests.findIndex(g => g.id === id);
             if(guestIndex > -1) allGuests[guestIndex].is_arrived = isArrived;
             updateStats();
-            await supabase.from('guests').update({ is_arrived: isArrived }).eq('id', id);
+            await db.from('guests').update({ is_arrived: isArrived }).eq('id', id);
         }
 
         function filterGuests() {
@@ -103,7 +117,7 @@
         }
 
         function updateStats() {
-            document.getElementById('stats').innerText = `Gelen: ${allGuests.filter(g => g.is_arrived).length} / Toplam: ${allGuests.length}`;
+            document.getElementById('statsText').innerText = `Gelen: ${allGuests.filter(g => g.is_arrived).length} / Toplam: ${allGuests.length}`;
         }
 
         loadGuests();
