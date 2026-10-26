@@ -3,130 +3,170 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nova Guest Admin</title>
+    <title>NOVA ADMIN</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; padding: 20px; background: #121212; color: #eee; max-width: 700px; margin: auto; }
-        h1, h2 { color: #ff5500; text-transform: uppercase; letter-spacing: 1px; }
-        .card { background: #1e1e1e; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #333; }
-        input[type="text"], textarea { width: 100%; padding: 12px; margin-bottom: 10px; background: #222; border: 1px solid #444; color: #fff; box-sizing: border-box; border-radius: 4px; }
-        input[type="text"]:focus, textarea:focus { outline: none; border-color: #ff5500; }
-        textarea { height: 120px; resize: vertical; }
-        button { padding: 12px 20px; background: #ff5500; color: #000; border: none; font-weight: bold; cursor: pointer; font-size: 15px; border-radius: 4px; transition: 0.2s; }
-        button:hover { background: #e04a00; }
-        button.delete-btn { background: #dc3545; color: #fff; padding: 6px 12px; font-size: 13px; }
-        button.delete-btn:hover { background: #c82333; }
-        .status { margin-top: 10px; font-size: 14px; font-weight: bold; color: #4caf50; }
-        .error { color: #ff5500; }
+        :root { --bg: #09090b; --card: #18181b; --accent: #ff5500; --text: #f4f4f5; --text-muted: #a1a1aa; --border: #27272a; --danger: #ef4444; }
+        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 40px 20px; }
+        .container { max-width: 900px; margin: auto; }
+        h1 { font-family: 'Bebas Neue', sans-serif; color: var(--accent); font-size: 3.5rem; margin: 0 0 40px 0; letter-spacing: 2px; text-align: center; }
+        h2 { font-size: 1.1rem; font-weight: 600; margin: 0 0 20px 0; color: var(--text); }
         
-        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #333; }
-        .list-item:last-child { border-bottom: none; }
-        .list-item span { font-size: 15px; }
-        .arrived-badge { background: #ff5500; color: #000; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; margin-left: 10px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+        @media(max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+        
+        .card { background: var(--card); padding: 30px; border-radius: 20px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        input[type="text"], textarea { width: 100%; padding: 16px; margin-bottom: 15px; background: var(--bg); border: 1px solid var(--border); color: var(--text); box-sizing: border-box; border-radius: 12px; font-family: 'Inter', sans-serif; font-size: 0.95rem; outline: none; transition: 0.2s; }
+        input[type="text"]:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255, 85, 0, 0.15); }
+        textarea { height: 160px; resize: none; }
+        
+        button { width: 100%; padding: 16px; background: var(--accent); color: #000; border: none; font-weight: 600; font-size: 1rem; border-radius: 12px; cursor: pointer; transition: all 0.2s; font-family: 'Inter', sans-serif; }
+        button:hover { background: #e64c00; transform: translateY(-2px); }
+        button:active { transform: translateY(0); }
+        
+        .status { margin-top: 15px; font-size: 0.9rem; font-weight: 500; min-height: 20px; text-align: center; }
+        .success { color: #10b981; }
+        .error { color: var(--danger); }
+        
+        .list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .list-header h2 { margin: 0; }
+        .list-container { max-height: 400px; overflow-y: auto; padding-right: 8px; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #444; }
+        
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 16px; border-bottom: 1px solid var(--border); background: var(--bg); border-radius: 12px; margin-bottom: 8px; transition: 0.2s; }
+        .list-info { display: flex; align-items: center; gap: 12px; }
+        .guest-name { font-size: 1rem; font-weight: 500; }
+        .badge { background: rgba(255, 85, 0, 0.1); border: 1px solid var(--accent); color: var(--accent); padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.5px; }
+        
+        .delete-btn { width: auto; background: transparent; color: var(--text-muted); padding: 8px; border-radius: 8px; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
+        .delete-btn:hover { background: rgba(239, 68, 68, 0.1); color: var(--danger); transform: none; }
+        .delete-btn svg { width: 20px; height: 20px; }
+        .desc { font-size: 0.85rem; color: var(--text-muted); margin: -5px 0 15px 0; }
     </style>
 </head>
 <body>
-    <h1>Nova Guest Admin</h1>
+    <div class="container">
+        <h1>NOVA ADMIN</h1>
 
-    <div class="card">
-        <h2>Tekli Misafir Ekle</h2>
-        <input type="text" id="singleName" placeholder="Örn: Ahmet Yılmaz">
-        <button onclick="addSingleGuest()">Misafir Ekle</button>
-        <div id="singleStatus" class="status"></div>
-    </div>
+        <div class="grid">
+            <div class="card">
+                <h2>Tekli Ekle</h2>
+                <input type="text" id="singleName" placeholder="Örn: Ceyda Yılmaz" autocomplete="off">
+                <button onclick="addSingleGuest()">Misafir Ekle</button>
+                <div id="singleStatus" class="status"></div>
+            </div>
 
-    <div class="card">
-        <h2>Toplu Liste Aktar</h2>
-        <p style="font-size: 13px; color: #aaa; margin-top: 0;">Her satıra bir isim gelecek şekilde listeyi yapıştırın (boşluklar otomatik temizlenir).</p>
-        <textarea id="bulkNames" placeholder="Ayşe Demir&#10;Mehmet Kaya&#10;..."></textarea>
-        <button onclick="addBulkGuests()">Toplu Ekle</button>
-        <div id="bulkStatus" class="status"></div>
-    </div>
+            <div class="card">
+                <h2>Toplu Ekle</h2>
+                <p class="desc">Kopyalanan listeyi yapıştırın (boşluklar otomatik temizlenir).</p>
+                <textarea id="bulkNames" placeholder="Ayşe Demir&#10;Mehmet Kaya&#10;..."></textarea>
+                <button onclick="addBulkGuests()">Listeyi Aktar</button>
+                <div id="bulkStatus" class="status"></div>
+            </div>
+        </div>
 
-    <div class="card">
-        <h2>Mevcut Liste (<span id="totalCount">0</span> Kişi)</h2>
-        <div id="adminGuestList">Yükleniyor...</div>
+        <div class="card">
+            <div class="list-header">
+                <h2>Mevcut Liste</h2>
+                <span style="color: var(--text-muted); font-size: 0.95rem; font-weight: 500;"><span id="totalCount">0</span> Kişi</span>
+            </div>
+            <div class="list-container" id="adminGuestList">
+                <div class="status" style="color: var(--text-muted)">Yükleniyor...</div>
+            </div>
+        </div>
     </div>
 
     <script>
         const supabaseUrl = 'https://fmcfcnqqqjjpoomqised.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtY2ZjbnFxcWpqcG9vbXFpc2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwMzQ3MTIsImV4cCI6MjEwODYxMDcxMn0.1C7SeDvYI2K9iDO3LLRsaHbFXD2Cz9T7M6dSw26pIVs';
-        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+        
+        // SYNTAX ERROR ÇÖZÜMÜ
+        const db = window.supabase.createClient(supabaseUrl, supabaseKey);
 
         async function loadAdminGuests() {
             const listDiv = document.getElementById('adminGuestList');
-            const { data, error } = await supabase.from('guests').select('*').order('id', { ascending: false });
+            const { data, error } = await db.from('guests').select('*').order('id', { ascending: false });
             
             if(error) return listDiv.innerHTML = `<span class="error">Hata: ${error.message}</span>`;
             
             document.getElementById('totalCount').innerText = data.length;
             listDiv.innerHTML = '';
             
-            if(data.length === 0) return listDiv.innerHTML = '<span style="color:#aaa;">Henüz kimse eklenmemiş.</span>';
+            if(data.length === 0) return listDiv.innerHTML = '<div style="color:var(--text-muted); padding: 20px; text-align:center;">Liste boş.</div>';
 
             data.forEach(guest => {
                 const item = document.createElement('div');
                 item.className = 'list-item';
                 
-                const nameSpan = document.createElement('span');
-                nameSpan.innerHTML = `${guest.name} ${guest.is_arrived ? '<span class="arrived-badge">GELDİ</span>' : ''}`;
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'list-info';
+                infoDiv.innerHTML = `<span class="guest-name">${guest.name}</span> ${guest.is_arrived ? '<span class="badge">GELDİ</span>' : ''}`;
                 
                 const delBtn = document.createElement('button');
                 delBtn.className = 'delete-btn';
-                delBtn.innerText = 'Sil';
+                delBtn.title = 'Sil';
+                delBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>`;
                 delBtn.onclick = () => deleteGuest(guest.id);
 
-                item.appendChild(nameSpan);
+                item.appendChild(infoDiv);
                 item.appendChild(delBtn);
                 listDiv.appendChild(item);
             });
         }
 
+        function showStatus(elementId, message, isError = false) {
+            const el = document.getElementById(elementId);
+            el.className = `status ${isError ? 'error' : 'success'}`;
+            el.innerText = message;
+            setTimeout(() => el.innerText = '', 3000);
+        }
+
         async function addSingleGuest() {
             const nameInput = document.getElementById('singleName');
-            const status = document.getElementById('singleStatus');
             const name = nameInput.value.trim();
 
-            if(!name) return status.innerHTML = '<span class="error">Lütfen bir isim girin.</span>';
+            if(!name) return showStatus('singleStatus', 'Lütfen bir isim girin.', true);
             
-            status.innerHTML = "Ekleniyor...";
-            const { error } = await supabase.from('guests').insert([{ name: name, is_arrived: false }]);
+            document.getElementById('singleStatus').innerText = "Ekleniyor...";
+            const { error } = await db.from('guests').insert([{ name: name, is_arrived: false }]);
             
-            if(error) return status.innerHTML = `<span class="error">Hata: ${error.message}</span>`;
+            if(error) return showStatus('singleStatus', `Hata: ${error.message}`, true);
             
-            status.innerText = "Başarıyla eklendi!";
+            showStatus('singleStatus', 'Başarıyla eklendi!');
             nameInput.value = '';
             loadAdminGuests();
-            setTimeout(() => status.innerText = '', 3000);
         }
 
         async function addBulkGuests() {
             const text = document.getElementById('bulkNames').value;
-            const status = document.getElementById('bulkStatus');
             const names = text.split('\n').map(n => n.trim()).filter(n => n.length > 0);
 
-            if(names.length === 0) return status.innerHTML = '<span class="error">Lütfen en az bir isim girin.</span>';
+            if(names.length === 0) return showStatus('bulkStatus', 'Lütfen geçerli isimler girin.', true);
             
-            status.innerText = "Yükleniyor...";
+            document.getElementById('bulkStatus').innerText = "Yükleniyor...";
             const insertData = names.map(name => ({ name: name, is_arrived: false }));
-            const { error } = await supabase.from('guests').insert(insertData);
+            const { error } = await db.from('guests').insert(insertData);
             
-            if(error) return status.innerHTML = `<span class="error">Hata: ${error.message}</span>`;
+            if(error) return showStatus('bulkStatus', `Hata: ${error.message}`, true);
             
-            status.innerText = `${names.length} kişi eklendi!`;
+            showStatus('bulkStatus', `${names.length} kişi eklendi!`);
             document.getElementById('bulkNames').value = '';
             loadAdminGuests();
-            setTimeout(() => status.innerText = '', 3000);
         }
 
         async function deleteGuest(id) {
-            if(!confirm("Bu misafiri silmek istediğinize emin misiniz?")) return;
-            const { error } = await supabase.from('guests').delete().eq('id', id);
-            if(error) alert("Silinirken hata oluştu: " + error.message);
+            if(!confirm("Silmek istediğinize emin misiniz?")) return;
+            const { error } = await db.from('guests').delete().eq('id', id);
+            if(error) alert("Silinirken hata: " + error.message);
             else loadAdminGuests();
         }
 
-        // Sayfa açıldığında listeyi yükle
         loadAdminGuests();
     </script>
 </body>
